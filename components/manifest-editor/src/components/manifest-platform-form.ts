@@ -4,6 +4,7 @@ import { Manifest, ProtocolHandler, RelatedApplication, ShortcutItem } from '../
 import { standardCategories } from '../locales/categories';
 import { validateSingleField, singleFieldValidation } from '@pwabuilder/manifest-validation';
 import { errorInTab, insertAfter } from '../utils/helpers';
+import { isValidRelatedApp } from '@pwabuilder/manifest-validation';
 //import { validateSingleField } from 'manifest-validation';
 
 const platformOptions: Array<String> = ["windows", "chrome_web_store", "play", "itunes", "webapp", "f-droid", "amazon"]
@@ -20,9 +21,6 @@ let fieldsValidated: boolean = false;
 export class ManifestPlatformForm extends LitElement {
 
   @property({type: Object}) manifest: Manifest = {};
-
- 
-
   @state() shortcutHTML: TemplateResult[] = [];
   @state() protocolHTML: TemplateResult[] = [];
   @state() relatedAppsHTML: TemplateResult[] = [];
@@ -322,8 +320,10 @@ export class ManifestPlatformForm extends LitElement {
         const validation: singleFieldValidation = await validateSingleField(field, this.manifest[field]);
         let passed = validation!.valid;
 
+        let input = this.shadowRoot!.querySelector('[data-field="' + field + '"]');
+
+        // Checks if the whole field has the correct structure
         if(!passed){
-          let input = this.shadowRoot!.querySelector('[data-field="' + field + '"]');
           
           // Remove old erros
           if(this.shadowRoot!.querySelector(`.${field}-error-div`)){
@@ -347,6 +347,24 @@ export class ManifestPlatformForm extends LitElement {
 
           // add red outline
           input!.classList.add("error");
+        }
+
+        // checks inner entries of related apps
+        if(field === "related_applications"){
+          this.manifest[field]?.forEach((app: RelatedApplication, index: number) => {
+            let result = isValidRelatedApp(app);
+            if(result !== "valid"){
+              let div = document.createElement('div');
+              div.classList.add(`${field}-error-div`);
+              let p = document.createElement('p');
+              p.innerText = `There is a problem related application #${index + 1}: the ${result} entry is invalid.`;
+              p.style.color = "#eb5757";
+              div.append(p);
+              this.errorCount++;
+              insertAfter(div, input!.parentNode!.lastElementChild);
+              input!.classList.add("error");
+            }
+          });
         }
       }
     }
@@ -375,9 +393,6 @@ export class ManifestPlatformForm extends LitElement {
       });
     }
   }
-
-  
-
 
   async handleInputChange(event: InputEvent){
 
@@ -670,7 +685,9 @@ export class ManifestPlatformForm extends LitElement {
     const validation: singleFieldValidation = await validateSingleField(field, updatedValue);
     let passed = validation!.valid;
 
-    if(passed){
+    let inner = this.validateInnerRA(field, (input as HTMLInputElement));
+
+    if(passed && inner){
 
       let manifestUpdated = new CustomEvent('manifestUpdated', {
         detail: {
@@ -688,7 +705,7 @@ export class ManifestPlatformForm extends LitElement {
         this.errorCount--;
         let last = input!.parentNode!.lastElementChild;
         last!.parentNode!.removeChild(last!);
-      } 
+      }
     } else {
       if(this.shadowRoot!.querySelector(`.${field}-error-div`)){
         let error_div = this.shadowRoot!.querySelector(`.${field}-error-div`);
@@ -709,6 +726,10 @@ export class ManifestPlatformForm extends LitElement {
         insertAfter(div, input!.parentNode!.lastElementChild);
       }
 
+      if(field === "related_applications"){
+        this.validateInnerRA(field, (input as HTMLInputElement));
+      }
+
       input!.classList.add("error");
     }
     if(this.errorCount == 0){
@@ -716,6 +737,32 @@ export class ManifestPlatformForm extends LitElement {
     } else {
       this.dispatchEvent(errorInTab(true, "platform"));
     }
+  }
+
+  validateInnerRA(field: string, _input: HTMLInputElement){
+    let flag = true;
+
+    /* if(this.shadowRoot!.querySelector(`.${field}-error-div`)){
+      let error_div = this.shadowRoot!.querySelector(`.${field}-error-div`);
+      error_div!.parentElement!.removeChild(error_div!);
+    } */
+
+    this.manifest[field]?.forEach((app: RelatedApplication, _index: number) => {
+      let result = isValidRelatedApp(app);
+      if(result !== "valid"){
+        /* let div = document.createElement('div');
+        div.classList.add(`${field}-error-div`);
+        let p = document.createElement('p');
+        p.innerText = `There is a problem related application #${index + 1}: the ${result} entry is invalid.`;
+        p.style.color = "#eb5757";
+        div.append(p);
+        this.errorCount++;
+        insertAfter(div, input!.parentNode!.lastElementChild);
+        input!.classList.add("error"); */
+        flag = false;
+      } 
+    });
+    return flag;
   }
 
 
