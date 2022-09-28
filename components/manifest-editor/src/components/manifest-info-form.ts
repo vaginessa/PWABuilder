@@ -15,7 +15,7 @@ export class ManifestInfoForm extends LitElement {
   @property({type: Object, hasChanged(value: Manifest, oldValue: Manifest) {
     if(value !== oldValue && value.name){
       manifestInitialized = true;
-      return value !== oldValue;
+      console.log("hasChanged", manifestInitialized);
     }
     return value !== oldValue;
   }}) manifest: Manifest = {};
@@ -217,6 +217,7 @@ export class ManifestInfoForm extends LitElement {
   }
 
   protected async updated(_changedProperties: PropertyValueMap<any> | Map<PropertyKey, unknown>) {
+    console.log("updated", manifestInitialized);
     if(manifestInitialized){ // _changedProperties.has("manifest") && _changedProperties.get("manifest") && 
       manifestInitialized = false;
       this.initMissingColors();

@@ -1,4 +1,4 @@
-import { Manifest, singleFieldValidation, Validation } from "./interfaces";
+import { innerValidation, Manifest, RelatedApplication, singleFieldValidation, Validation} from "./interfaces";
 import { containsStandardCategory, isAtLeast, isStandardOrientation, isValidLanguageCode } from "./utils/validation-utils";
 
 export const maniTests: Array<Validation> = [
@@ -12,7 +12,8 @@ export const maniTests: Array<Validation> = [
         errorString: "name is required and must be a string with a length > 0",
         quickFix: true,
         test: (value: string) => {
-            return value && typeof value === "string" && value.length > 0;
+            let valid = value && typeof value === "string" && value.length > 0;
+            return {"result": valid};
         }
     },
     {
@@ -33,7 +34,8 @@ export const maniTests: Array<Validation> = [
         errorString: "share_target must be an object",
         quickFix: true,
         test: (value: string) => {
-            return value && typeof value === "object";
+            let valid = value && typeof value === "object";
+            return {"result": valid};
         }
     },
     {
@@ -61,7 +63,7 @@ export const maniTests: Array<Validation> = [
         test: (value: any[]) => {
             const isArray = value && Array.isArray(value) && value.length > 0 ? true : false;
 
-            return isArray;
+            return {"result": isArray};
         }
     },
     {
@@ -87,15 +89,15 @@ export const maniTests: Array<Validation> = [
         errorString: "Need at least one icon with purpose set to any",
         quickFix: true,
         test: (value: any[]) => {
-            const isArray = value && Array.isArray(value) && value.length > 0 ? true : false;
+            const isArray = value && Array.isArray(value) && value.length > 0;
             
             if (isArray) {
                 const anyIcon = value.find(icon => icon.purpose === "any");
-
-                return anyIcon ? true : false;
+                let valid = anyIcon ? true : false;
+                return {"result": valid};
             }
             else {
-                return false;
+                return {"result": false};
             }
         }
     },
@@ -127,10 +129,11 @@ export const maniTests: Array<Validation> = [
             if (isArray) {
                 const anyIcon = value.find(icon => isAtLeast(icon.sizes, 512, 512) && (icon.type === 'image/png' || icon.src.endsWith(".png")));
 
-                return anyIcon ? true : false;
+                let valid = anyIcon ? true : false;
+                return {"result": valid};
             }
             else {
-                return false;
+                return {"result": false};
             }
         }
     },
@@ -162,10 +165,11 @@ export const maniTests: Array<Validation> = [
             if (isArray) {
                 const wrongIcon = value.find(icon => icon.purpose === "any maskable");
 
-                return wrongIcon ? false : true;
+                let valid = wrongIcon ? false : true;
+                return {"result": valid};
             }
             else {
-                return false;
+                return {"result": false};
             }
         }
     },
@@ -179,7 +183,8 @@ export const maniTests: Array<Validation> = [
         errorString: "scope must be a string with a length > 0",
         quickFix: true,
         test: (value: string) => {
-            return value && typeof value === "string" && value.length > 0;
+            let valid = value && typeof value === "string" && value.length > 0; // add test isInScope()
+            return {"result": valid};
         }
     },
     {
@@ -191,10 +196,10 @@ export const maniTests: Array<Validation> = [
         quickFix: true,
         test: (value: string) => {
             if (value.trim() !== value) {
-                return false;
+                return {"result": false};
             }
             else {
-                return true;
+                return {"result": true};
             }
         }
     },
@@ -210,7 +215,7 @@ export const maniTests: Array<Validation> = [
         quickFix: true,
         test: (value: string) => {
           const existsAndLength = value && value.length >= 2;
-          return existsAndLength;
+          return {"result": existsAndLength};
         },
     },
     {
@@ -222,10 +227,10 @@ export const maniTests: Array<Validation> = [
         quickFix: true,
         test: (value: string) => {
             if (value.trim() !== value) {
-                return false;
+                return {"result": false};
             }
             else {
-                return true;
+                return {"result": true};
             }
         }
     },
@@ -239,8 +244,10 @@ export const maniTests: Array<Validation> = [
             "https://developer.mozilla.org/en-US/docs/Web/Manifest/start_url",
         errorString: "start_url is required and must be a string with a length > 0",
         quickFix: true,
-        test: (value: string) =>
-            value && typeof value === "string" && value.length > 0
+        test: (value: string) =>{
+           let valid =  value && typeof value === "string" && value.length > 0;
+           return {"result": valid};
+        }
     },
     {
         infoString: "The display member is a string that determines the developers' preferred display mode for the website. The display mode changes how much of browser UI is shown to the user and can range from browser (when the full browser window is shown) to fullscreen (when the app is fullscreened).",
@@ -252,9 +259,10 @@ export const maniTests: Array<Validation> = [
         errorString: "display must be one of the following strings: fullscreen, standalone, minimal-ui, browser",
         quickFix: true,
         test: (value: string) => {
-            return ["fullscreen", "standalone", "minimal-ui", "browser"].includes(
+            let valid = ["fullscreen", "standalone", "minimal-ui", "browser"].includes(
                 value
             );
+            return {"result": valid};
         },
     },
     {
@@ -270,10 +278,10 @@ export const maniTests: Array<Validation> = [
         test: (value: string) => {
             if (value) {
                 const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-                return hexRegex.test(value);
+                return {"result": hexRegex.test(value)};
             }
             else {
-                return false;
+                return {"result": false};
             }
         },
     },
@@ -290,10 +298,10 @@ export const maniTests: Array<Validation> = [
         test: (value: string) => {
             if (value) {
                 const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-                return hexRegex.test(value);
+                return {"result":hexRegex.test(value)};
             }
             else {
-                return false;
+                return {"result": false};
             }
         },
     },
@@ -308,7 +316,7 @@ export const maniTests: Array<Validation> = [
         errorString: "orientation must be one of the following strings: any, natural, landscape, landscape-primary, landscape-secondary, portrait, portrait-primary, portrait-secondary",
         quickFix: true,
         test: (value: string) => {
-            return isStandardOrientation(value);
+            return {"result": isStandardOrientation(value)}
         },
     },
     {
@@ -340,8 +348,10 @@ export const maniTests: Array<Validation> = [
             "https://developer.mozilla.org/en-US/docs/Web/Manifest/screenshots",
         errorString: "screenshots must be an array with a length > 0",
         quickFix: true,
-        test: (value: string) =>
-            value && Array.isArray(value) && value.length > 0 ? true : false,
+        test: (value: string) => {
+            let valid = value && Array.isArray(value) && value.length > 0;
+            return {"result": valid};
+        }
     },
     {
         infoString: "The shortcuts member defines an array of shortcuts or links to key tasks or pages within a web app. Shortcuts will show as jumplists on Windows and on the home screen on Android.",
@@ -359,14 +369,14 @@ export const maniTests: Array<Validation> = [
                 // check image types dont include webp
                 const hasWebp = value.some(icon => icon.type === "image/webp");
                 if (hasWebp) {
-                    return false;
+                    return {"result": false};
                 }
                 else {
-                    return true;
+                    return {"result": true};
                 }
             }
             else {
-                return false;
+                return {"result": false};
             }
         }
     },
@@ -382,7 +392,8 @@ export const maniTests: Array<Validation> = [
         errorString: "iarc_rating_id must be a string with a length > 0",
         test: (value: string) => {
             // should exist
-            return value && typeof value === "string" && value.length > 0;
+            let valid = value && typeof value === "string" && value.length > 0;
+            return {"result": valid};
         }
     },
     {
@@ -396,9 +407,33 @@ export const maniTests: Array<Validation> = [
         quickFix: true,
         test: (value: any[]) => {
             const isArray = value && Array.isArray(value);
-            return isArray;
+            
+            return {"result": isArray};
         },
         errorString: "related_applications should be a non-empty array",
+    },
+    {
+        infoString: "The related_applications field is an array of objects specifying native applications that are installable by, or accessible to, the underlying platform — for example, a platform-specific (native) Windows application.",
+        displayString: "The inner structures of related applications are valid",
+        category: "optional",
+        member: "related_applications",
+        defaultValue: [],
+        docsLink:
+            "https://developer.mozilla.org/en-US/docs/Web/Manifest/related_applications",
+        quickFix: true,
+        test: (value: any[]) => {
+            let additionalInfo: innerValidation[] = [];
+            let isInnerValid = true;
+            value.forEach((app: RelatedApplication, index: number) => {
+                let part = validateSingleRelatedApp(app);
+                if(part !== "valid"){
+                    isInnerValid = false;
+                    additionalInfo.push({ part: part, index: index + 1});
+                }
+            });
+            return {"result": isInnerValid, "additionalInfo": additionalInfo};
+        },
+        errorString: "There is an issue with one of your related applications",
     },
     {
         infoString: "The prefer_related_applications member is a boolean value that specifies that applications listed in related_applications should be preferred over the web application. If the prefer_related_applications member is set to true, the user agent might suggest installing one of the related applications instead of this web app.",
@@ -411,7 +446,8 @@ export const maniTests: Array<Validation> = [
             "https://developer.mozilla.org/en-US/docs/Web/Manifest/prefer_related_applications",
         quickFix: false, // @ Justin Willis, I added this but left it false because idk how to do quick fixes lol.
         test: (value: any) => {
-            return typeof(value)  === "boolean"
+            let valid = typeof(value)  === "boolean"
+            return {"result": valid};
         },
         errorString: "prefer_related_applications should be set to a boolean value",
     },
@@ -427,10 +463,10 @@ export const maniTests: Array<Validation> = [
         test: (value: any[]) => {
             if (value) {
                 const isGood = containsStandardCategory(value);
-                return isGood;
+                return {"result": isGood};
             }
 
-            return false;
+            return {"result": false};
         },
         errorString: "categories should be a non-empty array"
     },
@@ -444,8 +480,10 @@ export const maniTests: Array<Validation> = [
             "https://developer.mozilla.org/en-US/docs/Web/Manifest/lang",
         errorString: "lang should be set to a valid language code",
         quickFix: true,
-        test: (value: string) =>
-                value && typeof value === "string" && value.length > 0 && isValidLanguageCode(value)
+        test: (value: string) => {
+            let valid = value && typeof value === "string" && value.length > 0 && isValidLanguageCode(value);
+            return {"result": valid};
+        }
     },
     {
         member: "dir",
@@ -457,8 +495,10 @@ export const maniTests: Array<Validation> = [
         docsLink:
             "https://developer.mozilla.org/en-US/docs/Web/Manifest/dir",
         quickFix: true,
-        test: (value: string) =>
-                value && typeof value === "string" && value.length > 0 && (value === "ltr" || value === "rtl" || value === "auto")
+        test: (value: string) => {
+            let valid = value && typeof value === "string" && value.length > 0 && (value === "ltr" || value === "rtl" || value === "auto");
+            return {"result": valid};
+        }
     },
     {
         member: "description",
@@ -470,8 +510,10 @@ export const maniTests: Array<Validation> = [
             "https://developer.mozilla.org/en-US/docs/Web/Manifest/description",
         errorString: "description must be a string with a length > 0",
         quickFix: true,
-        test: (value: string) =>
-            value && typeof value === "string" && value.length > 0,
+        test: (value: string) => {
+            let valid = value && typeof value === "string" && value.length > 0;
+            return {"result": valid};
+        }
     },
     {
         member: "description",
@@ -482,10 +524,9 @@ export const maniTests: Array<Validation> = [
         quickFix: true,
         test: (value: string) => {
             if (value.trim() !== value) {
-                return false;
-            }
-            else {
-                return true;
+                return {"result": false};
+            } else {
+                return {"result": true};
             }
         }
     },
@@ -502,7 +543,7 @@ export const maniTests: Array<Validation> = [
         test: (value: any[]) => {
             const isArray = value && Array.isArray(value);
 
-            return isArray;
+            return {"result": isArray};
         }
     },
     {
@@ -518,7 +559,7 @@ export const maniTests: Array<Validation> = [
         test: (value: any[]) => {
             const isArray = value && Array.isArray(value);
 
-            return isArray;
+            return {"result": isArray};
         }
     },
     {
@@ -530,8 +571,10 @@ export const maniTests: Array<Validation> = [
         docsLink: "https://developer.chrome.com/blog/pwa-manifest-id",
         errorString: "id must be a string with a length > 0",
         quickFix: true,
-        test: (value: string) =>
-            value && typeof value === "string" && value.length > 0,
+        test: (value: string) => {
+            let valid = value && typeof value === "string" && value.length > 0;
+            return {"result": valid};
+        }
     },
     {
         member: "launch_handler",
@@ -543,7 +586,8 @@ export const maniTests: Array<Validation> = [
         errorString: "launch_handler should be defined",
         quickFix: false,
         test: (value: any) => {
-            return value && typeof value === "object";
+            let valid = value && typeof value === "object";
+            return {"result": valid};
         }
     }
 ];
@@ -591,8 +635,7 @@ export async function loopThroughKeys(manifest: Manifest): Promise<Array<Validat
               if (testResult === false) {
                 test.valid = false;
                 data.push(test);
-              }
-              else {
+              } else {
                 test.valid = true;
                 data.push(test);
               }
@@ -610,29 +653,60 @@ export async function loopThroughKeys(manifest: Manifest): Promise<Array<Validat
   
       // For && operations, true is the base.
       let singleField = true;
-      let failedTests: string[] | undefined = [];
+      let failedTests: string[] = [];
+      let additionalInfo: string[] = []
   
       maniTests.forEach((test) => {
         if (test.member === field && test.test) {
         
           const testResult = test.test(value);
-  
-          if(!testResult){
+
+          const result = testResult.result;
+
+          if(!result && !testResult.additionalInfo){
             failedTests!.push(test.errorString!);
+          } else if(!result && testResult.additionalInfo){
+            let more = testResult.additionalInfo;
+            more.forEach((info: innerValidation) => {
+                additionalInfo.push(`There is a problem with ${field} #${info.index}: the ${info.part} field is invalid.`);
+            });
           }
   
           // If the test passes true && true = true.
           // If the test fails true && false = false
           // If a field has MULTIPLE tests, they will stack
           // ie: true (base) && true (test 1) && false (ie test 2 fails).
-          singleField = singleField && testResult;
+          singleField = singleField && result;
         }
       });
-  
-      if(singleField){
-        resolve({"valid": singleField})
-      }
-  
-      resolve({"valid": singleField, "errors": failedTests});
+
+      resolve({"valid": singleField, "errors": failedTests, "additionalInfo": additionalInfo});
     })
   }
+
+  export function validateSingleRelatedApp(ra: RelatedApplication){
+    if(!platformOptions.includes(ra.platform)){
+      return "platform";
+    }
+  
+    if(!isValidURL(ra.url!)){
+      return "url";
+    }
+  
+    return "valid";
+  }
+  
+  function isValidURL(str: string) {
+    // from https://stackoverflow.com/a/14582229 but removed the ip address section
+    var pattern = new RegExp(
+      '^((https?:)?\\/\\/)?' + // protocol
+      '(?:\\S+(?::\\S*)?@)?(([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}' + // domain name
+      '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
+      '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
+      '(\\\\#[-a-z\\\\d_]*)?', // fragment locator
+      'i' // case insensitive
+    );
+    return !!pattern.test(str);
+  }
+
+  const platformOptions: Array<String> = ["windows", "chrome_web_store", "play", "itunes", "webapp", "f-droid", "amazon"]

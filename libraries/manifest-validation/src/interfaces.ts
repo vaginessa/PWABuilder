@@ -120,4 +120,10 @@ export interface Manifest {
   export interface singleFieldValidation {
     valid: Boolean;
     errors?: string[];
+    additionalInfo?: string[];
+  }
+
+  export interface innerValidation {
+    part: string;
+    index: number;
   }

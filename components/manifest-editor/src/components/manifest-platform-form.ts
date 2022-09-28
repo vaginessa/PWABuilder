@@ -2,9 +2,8 @@ import { LitElement, css, html, PropertyValueMap, TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { Manifest, ProtocolHandler, RelatedApplication, ShortcutItem } from '../utils/interfaces';
 import { standardCategories } from '../locales/categories';
-import { validateSingleField, singleFieldValidation, validateSingleRelatedApp, validateSingleProtocol } from '@pwabuilder/manifest-validation';
+import { validateSingleField, singleFieldValidation } from '@pwabuilder/manifest-validation';
 import { errorInTab, insertAfter } from '../utils/helpers';
-//import { validateSingleField } from 'manifest-validation';
 
 const platformOptions: Array<String> = ["windows", "chrome_web_store", "play", "itunes", "webapp", "f-droid", "amazon"]
 const platformText: Array<String> = ["Windows Store", "Google Chrome Web Store", "Google Play Store", "Apple App Store", "Web apps", "F-droid", "Amazon App Store"]
@@ -290,6 +289,7 @@ export class ManifestPlatformForm extends LitElement {
      run again. Its true purpose is to keep the view aligned with the manifest. */
      
     if(manifestInitialized){
+      console.log("but this one works?")
       manifestInitialized = false;
       if(!fieldsValidated){
         this.requestValidateAllFields();
@@ -325,43 +325,27 @@ export class ManifestPlatformForm extends LitElement {
         let passed = validation!.valid;
         let input = this.shadowRoot!.querySelector('[data-field="' + field + '"]');
 
-        let broken_inner: any[] = [];
-        if(field === "related_applications"){
-          this.manifest[field]!.forEach((app: RelatedApplication, index: number) => {
-            let part = validateSingleRelatedApp(app);
-            if(part !== "valid"){
-              broken_inner.push({ part: part, index: index })
-            }
-          })
-        } else if(field === "protocol_handlers"){
-          this.manifest[field]!.forEach((app: any, index: number) => {
-            let part = validateSingleProtocol(app);
-            if(part !== "valid"){
-              broken_inner.push({ part: part, index: index })
-            }
-          })
-        }
-
-        if(broken_inner.length > 0){
-          let div = document.createElement('div');
-          div.classList.add(`${field}-error-div`);
-          broken_inner.forEach((error: any) => {
-            let p = document.createElement('p');
-            p.innerText = `There is an issue with ${field} #${error.index + 1}: ${error.part} is invalid`;
-            p.style.color = "#eb5757";
-            div.append(p);
-            this.errorCount++;
-          });
-          input!.classList.add("error");
-          insertAfter(div, input!.parentNode!.lastElementChild);
-        }
-
         if(!passed){
-          // update error list with new errors
-          if(validation.errors){
+
+          // populate errors that deal with the field
+          if(validation.errors && validation.errors.length > 0){
             let div = document.createElement('div');
             div.classList.add(`${field}-error-div`);
             validation.errors.forEach((error: string) => {
+              let p = document.createElement('p');
+              p.innerText = error;
+              p.style.color = "#eb5757";
+              div.append(p);
+              this.errorCount++;
+            });
+            insertAfter(div, input!.parentNode!.lastElementChild);
+          }
+
+          // populate errors that deal with inner structures
+          if(validation.additionalInfo && validation.additionalInfo.length > 0){
+            let div = document.createElement('div');
+            div.classList.add(`${field}-error-div`);
+            validation.additionalInfo.forEach((error: string) => {
               let p = document.createElement('p');
               p.innerText = error;
               p.style.color = "#eb5757";
@@ -401,9 +385,6 @@ export class ManifestPlatformForm extends LitElement {
       });
     }
   }
-
-  
-
 
   async handleInputChange(event: InputEvent){
 
@@ -686,20 +667,6 @@ export class ManifestPlatformForm extends LitElement {
     this.validatePlatformList("categories", categories);
   }
 
-  validatePlatformEntries(field: string){
-    let broken_inner: any[] = [];
-    if(field === "related_applications"){
-      this.manifest[field]!.forEach((app: RelatedApplication, index: number) => {
-        let part = validateSingleRelatedApp(app);
-        if(part !== "valid"){
-          broken_inner.push({ part: part, index: index })
-        }
-      })
-    }
-
-    return broken_inner;
-  }
-
   async validatePlatformList(field: string, updatedValue: any[]){
 
     if(this.validationPromise){
@@ -724,65 +691,22 @@ export class ManifestPlatformForm extends LitElement {
       });
 
       this.dispatchEvent(manifestUpdated);
-
-      let broken_inner: any[] = [];
-      if(field === "related_applications"){
-        this.manifest[field]!.forEach((app: RelatedApplication, index: number) => {
-          let part = validateSingleRelatedApp(app);
-          if(part !== "valid"){
-            broken_inner.push({ part: part, index: index })
-          }
-        })
-      }
-
-      if(broken_inner.length > 0){
-        if(this.shadowRoot!.querySelector(`.${field}-error-div`)){
-          let error_div = this.shadowRoot!.querySelector(`.${field}-error-div`);
-          error_div!.parentElement!.removeChild(error_div!);
-        }
-
-        let div = document.createElement('div');
-        div.classList.add(`${field}-error-div`);
-        broken_inner.forEach((error: any) => {
-          let p = document.createElement('p');
-          p.innerText = `There is an issue with ${field} #${error.index + 1}: ${error.part} is invalid`;
-          p.style.color = "#eb5757";
-          div.append(p);
-          this.errorCount++;
-        });
-        input!.classList.add("error");
-        insertAfter(div, input!.parentNode!.lastElementChild);
-      } else if(input!.classList.contains("error")){
+      if(input!.classList.contains("error")){
         input!.classList.toggle("error");
         this.errorCount--;
         let last = input!.parentNode!.lastElementChild;
         last!.parentNode!.removeChild(last!);
       } 
     } else {
+
+      // clear current errors
       if(this.shadowRoot!.querySelector(`.${field}-error-div`)){
         let error_div = this.shadowRoot!.querySelector(`.${field}-error-div`);
         error_div!.parentElement!.removeChild(error_div!);
       }
 
-      if(field === "related_applications" || "shortcuts" || "protocol_handlers"){
-        let broken_inner = this.validatePlatformEntries(field);
-        if(broken_inner.length > 0){
-          let div = document.createElement('div');
-          div.classList.add(`${field}-error-div`);
-          broken_inner.forEach((error: any) => {
-            let p = document.createElement('p');
-            p.innerText = `There is an issue with ${field} #${error.index + 1}: ${error.part} is invalid`;
-            p.style.color = "#eb5757";
-            div.append(p);
-            this.errorCount++;
-          });
-          input!.classList.add("error");
-          insertAfter(div, input!.parentNode!.lastElementChild);
-        }
-      }
-      
-      // update error list
-      if(validation.errors){
+      // populate errors that deal with the field
+      if(validation.errors && validation.errors.length > 0){
         let div = document.createElement('div');
         div.classList.add(`${field}-error-div`);
         validation.errors.forEach((error: string) => {
@@ -795,8 +719,24 @@ export class ManifestPlatformForm extends LitElement {
         insertAfter(div, input!.parentNode!.lastElementChild);
       }
 
+      // populate errors that deal with inner structures
+      if(validation.additionalInfo && validation.additionalInfo.length > 0){
+        let div = document.createElement('div');
+        div.classList.add(`${field}-error-div`);
+        validation.additionalInfo.forEach((error: string) => {
+          let p = document.createElement('p');
+          p.innerText = error;
+          p.style.color = "#eb5757";
+          div.append(p);
+          this.errorCount++;
+        });
+        insertAfter(div, input!.parentNode!.lastElementChild);
+      }
+
+      // add red outline
       input!.classList.add("error");
     }
+    
     if(this.errorCount == 0){
       this.dispatchEvent(errorInTab(false, "platform"));
     } else {

@@ -1,4 +1,4 @@
-import { Manifest, RelatedApplication } from "../interfaces";
+import { Manifest } from "../interfaces";
 import { langCodes, languageCodes } from "../locales";
 
 const possibleManiKeys = [
@@ -133,47 +133,20 @@ export function isAtLeast(sizes: string, width: number, height: number): boolean
   return dimensions.some(i => i.width >= width && i.height >= height);
 }
 
-export function validateSingleRelatedApp(ra: RelatedApplication){
-  if(!platformOptions.includes(ra.platform)){
-    return "platform";
-  }
 
-  if(!isValidURL(ra.url!)){
-    return "url";
-  }
-
-  return "valid";
-}
-
-function isValidURL(str: string) {
-  // from https://stackoverflow.com/a/14582229 but removed the ip address section
-  var pattern = new RegExp(
-    '^((https?:)?\\/\\/)?' + // protocol
-    '(?:\\S+(?::\\S*)?@)?(([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}' + // domain name
-    '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
-    '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
-    '(\\\\#[-a-z\\\\d_]*)?', // fragment locator
-    'i' // case insensitive
-  );
-  return !!pattern.test(str);
-}
-
-function isValidRelativeURL(str: string){
-  var pattern = new RegExp('^(?!www\.|(?:http|ftp)s?://|[A-Za-z]:\\|//).*');
-  return !!pattern.test(str);
-}
 
 export function validateSingleProtocol(proto: any){
-  let validProtocol = validProtocols.includes(proto.protocol) || proto.protocol.startsWith("web+") || proto.protocol.startsWith("web+")
+  let validProtocol = validProtocols.includes(proto.protocol) || proto.protocol.startsWith("web+")
   if(!validProtocol){
     return "protocol";
   }
 
-  // i guess more importantly we should check if its in the scope of the site.
+  // need to make sure its relative p0
+  // need to check for %s p0
+  // need to check base url + proto.url is a valid url p1
 
-  let validURL = isValidURL(proto.url) || isValidRelativeURL(proto.url);
-
-  if(!validURL){
+  // first check makes sure its relative , second check
+  if(!proto.url.startsWith("/") || (proto.url.split("%s").length == 1)){
     return "url";
   }
 
@@ -182,7 +155,7 @@ export function validateSingleProtocol(proto: any){
 
 
 
-const platformOptions: Array<String> = ["windows", "chrome_web_store", "play", "itunes", "webapp", "f-droid", "amazon"]
+
 const validProtocols: Array<String> = ["bitcoin", "dat", "dweb", "ftp", "geo", "gopher", "im", "ipfs", "ipns", "irc", "ircs", "magnet", "mailto", "matrix", "mms", "news", "nntp", "sip", "sms", "smsto", "ssb", "ssh", "tel", "urn", "webcal", "wtai", "xmpp"];
 export const required_fields = ["icons", "name", "short_name", "start_url"];
 export const reccommended_fields = ["display", "background_color", "theme_color", "orientation", "screenshots", "shortcuts"];

@@ -1,7 +1,7 @@
 import { Manifest, singleFieldValidation, Validation } from "./interfaces";
 export { Manifest, Validation, singleFieldValidation } from "./interfaces";
 import { findMissingKeys, isValidJSON } from "./utils/validation-utils";
-export { required_fields, reccommended_fields, optional_fields, validateSingleRelatedApp, validateSingleProtocol } from "./utils/validation-utils";
+export { required_fields, reccommended_fields, optional_fields, validateSingleProtocol } from "./utils/validation-utils";
 import { maniTests, findSingleField, loopThroughKeys, loopThroughRequiredKeys } from "./validations";
 
 export async function validateManifest(manifest: Manifest): Promise<Validation[]> {
@@ -22,7 +22,6 @@ export async function validateSingleField(field: string, value: any): Promise<si
     return new Promise(async (resolve, reject) => {
         try {
             const data = await findSingleField(field, value);
-            //console.log('data', data);
             resolve(data);
         }
         catch(err) {
