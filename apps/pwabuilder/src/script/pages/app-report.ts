@@ -35,6 +35,8 @@ import { AnalyticsBehavior, recordPWABuilderProcessStep } from '../utils/analyti
 //@ts-ignore
 import Color from "../../../node_modules/colorjs.io/dist/color";
 
+import * as htmlToImage from 'html-to-image';
+
 const valid_src = "/assets/new/valid.svg";
 const yield_src = "/assets/new/yield.svg";
 const stop_src = "/assets/new/stop.svg";
@@ -1830,9 +1832,27 @@ export class AppReport extends LitElement {
     
   }
 
+  convertToImage(){
+    var node = this.shadowRoot!.getElementById('manifestProgressRing');
+
+    htmlToImage.toPng(node!)
+      .then((dataUrl) => {
+        this.downloadImage(dataUrl, 'my-node.png');
+    });
+  }
+
+  downloadImage(url: string, filename: string){
+    console.log(url);
+    var a = document.createElement("a"); //Create <a>
+    a.href = "data:image/png;base64" + url; //Image Base64 Goes here
+    a.download = filename; //File name Here
+    a.click(); //Downloaded file
+  }
+
   render() {
     return html`
       <app-header></app-header>
+      <button type="button" @click=${() => this.convertToImage()}>CLICK TO CONVERT</button>
       <div id="report-wrapper">
         <div id="content-holder">
           <div id="header-row">
